@@ -1,26 +1,613 @@
 @import "tailwindcss";
 
+/* ─── Tokens ─────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-page: #06080f;
+  --bg-panel: #0c101c;
+  --bg-surface: #111827;
+  --bg-hover: #1a2235;
+
+  --accent: #6366f1;
+  --accent-dim: rgba(99, 102, 241, .15);
+  --accent-glow: rgba(99, 102, 241, .35);
+  --accent-light: #818cf8;
+  --purple: #8b5cf6;
+
+  --border: rgba(255, 255, 255, .07);
+  --border-focus: rgba(99, 102, 241, .6);
+
+  --txt-1: #f1f5f9;
+  --txt-2: #8b97b0;
+  --txt-3: #3d4a63;
+
+  --red: #f87171;
+  --red-bg: rgba(248, 113, 113, .1);
+  --red-border: rgba(248, 113, 113, .3);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── Reset ──────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-page);
+  color: var(--txt-1);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+/* Subtle noise texture on the page background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ─── App Shell ──────────────────────────────────── */
+.app-root {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  padding: 2.5rem 0.75rem 3rem;
+  max-width: 1440px;
+  margin: 0rem;
+}
+
+/* Decorative gradient orbs */
+.app-root::before,
+.app-root::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(120px);
+  opacity: 0.18;
+}
+
+.app-root::before {
+  width: 600px;
+  height: 600px;
+  background: var(--accent);
+  top: -200px;
+  left: -200px;
+}
+
+.app-root::after {
+  width: 500px;
+  height: 500px;
+  background: var(--purple);
+  bottom: -150px;
+  right: -100px;
+}
+
+/* ─── Header ─────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+  box-shadow: 0 0 32px var(--accent-glow);
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.app-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(100deg, var(--txt-1) 40%, var(--accent-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-subtitle {
+  font-size: 0.8125rem;
+  color: var(--txt-2);
+  margin-top: 1px;
+}
+
+/* ─── Main Grid ──────────────────────────────────── */
+.app-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .app-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  /* ImageUploader and ResultViewer sit side-by-side in the top row */
+  .app-grid> :nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .app-grid> :nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /* OperationPanel spans the full bottom row */
+  .app-grid> :nth-child(3) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* ─── Panel ──────────────────────────────────────── */
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.375rem;
+  min-height: 360px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+/* Subtle inner-top highlight */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .04) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  margin-bottom: 1rem;
+}
+
+.panel-title-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+/* ─── Upload Zone ────────────────────────────────── */
+.upload-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  padding: 2rem 1.5rem;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+
+.upload-zone:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.upload-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--txt-3);
+  margin-bottom: 1rem;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.upload-zone:hover .upload-icon-wrap {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
+.upload-primary {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--txt-2);
+}
+
+.upload-secondary {
+  font-size: 0.75rem;
+  color: var(--txt-3);
+  margin-top: 4px;
+}
+
+.change-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.875rem;
+  padding: 0.45rem 1rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--txt-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.change-btn:hover {
+  background: var(--bg-hover);
+  color: var(--txt-1);
+  border-color: var(--border-focus);
+}
+
+/* ─── Category Tabs ──────────────────────────────── */
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.875rem;
+}
+
+.category-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 99px;
+  font-size: 0.73rem;
+  font-weight: 500;
+  color: var(--txt-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+
+.category-tab:hover {
+  background: var(--bg-hover);
+  color: var(--txt-1);
+}
+
+.category-tab--active {
+  background: var(--accent-dim);
+  border-color: var(--border-focus);
+  color: var(--accent-light);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+.category-tab-icon {
+  opacity: .7;
+}
+
+.category-tab--active .category-tab-icon {
+  opacity: 1;
+}
+
+/* ─── Operation List ─────────────────────────────── */
+.op-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 190px;
+  overflow-y: auto;
+  margin-bottom: 0.875rem;
+}
+
+.op-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: var(--txt-2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: 0.01em;
+}
+
+.op-item:hover {
+  background: var(--bg-surface);
+  color: var(--txt-1);
+}
+
+.op-item--active {
+  /* background: var(--bg-surface); */
+  color: var(--txt-1);
+  position: relative;
+}
+
+.op-item--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* ─── Parameters ─────────────────────────────────── */
+.params-section {
+  border-top: 1px solid var(--border);
+  padding-top: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+
+.params-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  margin-bottom: 0.75rem;
+}
+
+.param-row {
+  margin-bottom: 0.875rem;
+}
+
+.param-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--txt-2);
+  margin-bottom: 0.4rem;
+}
+
+.param-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--accent-light);
+}
+
+/* Range slider */
+.slider {
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg-hover);
+  border-radius: 99px;
+  cursor: pointer;
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  border: 2px solid var(--bg-panel);
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: background .15s, box-shadow .15s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #fff;
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+/* ─── Apply Button ───────────────────────────────── */
+.apply-btn {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: opacity .15s, box-shadow .2s;
+  box-shadow: 0 4px 24px var(--accent-glow);
+}
+
+.apply-btn:hover:not(:disabled) {
+  opacity: .88;
+  box-shadow: 0 6px 32px var(--accent-glow);
+}
+
+.apply-btn:active:not(:disabled) {
+  opacity: .75;
+}
+
+.apply-btn:disabled {
+  background: var(--bg-surface);
+  color: var(--txt-3);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ─── Error Box ──────────────────────────────────── */
+.error-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  color: var(--red);
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+/* ─── Result Zone ────────────────────────────────── */
+.result-zone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  min-height: 200px;
+  transition: border-color .2s;
+}
+
+.result-zone--filled {
+  border-style: solid;
+  border-color: var(--border);
+}
+
+/* ─── Download Button ────────────────────────────── */
+.download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.875rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--txt-1);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: all .15s;
+}
+
+.download-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  color: #fff;
+}
+
+/* ─── OperationPanel wide layout ─────────────────── */
+.op-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+}
+
+.op-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+@media (min-width: 1024px) {
+  .app-root {
+    margin: 0 4rem;
+  }
+
+  .op-list {
+    max-height: none;
+    /* uncap in wide mode — left col scrolls naturally */
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .op-panel-body {
+    flex-direction: row;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .op-panel-left {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    padding-right: 1.25rem;
+    margin-right: 1.25rem;
+    overflow-y: auto;
+  }
+
+  .op-panel-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+}
+
+.op-no-params {
+  font-size: 0.8125rem;
+  color: var(--txt-3);
+  padding: 0.5rem 0;
+  flex: 1;
+}
+
+/* ─── Spinner ────────────────────────────────────── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 0.75s linear infinite;
 }
